@@ -1,0 +1,65 @@
+name: email-triage-env
+version: "1.0.0"
+description: >
+  A real-world email triage environment where an AI agent reads emails
+  and decides what to do with each one: reply, archive, escalate, delete, or mark as spam.
+  Designed for RL post-training using the OpenEnv standard.
+
+author: VisionX
+tags:
+  - openenv
+  - email
+  - triage
+  - real-world
+  - nlp
+
+tasks:
+  - id: easy
+    description: Triage clearly labelled spam and routine emails.
+    difficulty: easy
+    num_emails: 3
+
+  - id: medium
+    description: Triage a mix of emails requiring replies, archiving, or escalation.
+    difficulty: medium
+    num_emails: 4
+
+  - id: hard
+    description: Triage ambiguous emails requiring nuanced judgment.
+    difficulty: hard
+    num_emails: 5
+
+observation_space:
+  type: object
+  fields:
+    email_id: string
+    subject: string
+    sender: string
+    body: string
+    success: boolean
+    done: boolean
+    reward: float
+    message: string
+
+action_space:
+  type: object
+  fields:
+    action_type:
+      type: string
+      enum: [reply, archive, escalate, delete, spam]
+    reply_text:
+      type: string
+      optional: true
+
+reward:
+  range: [0.0, 1.0]
+  type: continuous
+  description: >
+    1.0 for a correct action. Partial credit (0.3-0.6) for close but wrong actions.
+    Reply quality is scored by keyword matching. -0.1 penalty for invalid actions.
+
+api:
+  reset: POST /reset?task_id={easy|medium|hard}
+  step: POST /step
+  state: GET /state
+  health: GET /health
