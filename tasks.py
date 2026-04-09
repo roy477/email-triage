@@ -114,13 +114,18 @@ TASKS = {
 
 def clamp_score(score: float) -> float:
     """Ensure score always stays strictly between (0,1)."""
-    return max(0.01, min(score, 0.99))
+    if score <= 0:
+        return 0.01
+    if score >= 1:
+        return 0.99
+    return score
 
 
 def grade_action(email: dict, action_type: str, reply_text: str = None) -> float:
 
     correct = email["correct_action"]
 
+    # Wrong action
     if action_type != correct:
         partial_credit_pairs = {("reply", "escalate"), ("escalate", "reply")}
 
@@ -129,6 +134,7 @@ def grade_action(email: dict, action_type: str, reply_text: str = None) -> float
 
         return clamp_score(0.01)
 
+    # Reply grading
     if correct == "reply":
 
         if not reply_text:
@@ -144,6 +150,11 @@ def grade_action(email: dict, action_type: str, reply_text: str = None) -> float
         keyword_score = matched / len(keywords)
 
         score = 0.6 + 0.4 * keyword_score
-        return clamp_score(round(score, 2))
 
+        # Clamp BEFORE returning
+        score = clamp_score(score)
+
+        return round(score, 2)
+
+    # Correct non-reply action
     return clamp_score(0.9)
